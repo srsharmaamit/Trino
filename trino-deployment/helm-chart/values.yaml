@@ -1,0 +1,106 @@
+# Default values for trino
+replicaCount: 1
+
+image:
+  repository: trino
+  pullPolicy: IfNotPresent
+  tag: "446"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Trino configuration
+trino:
+  coordinator:
+    enabled: true
+    replicaCount: 1
+    
+  worker:
+    enabled: true
+    replicaCount: 2
+    
+  # JVM configuration
+  jvm:
+    maxHeapSize: "2G"
+    minHeapSize: "2G"
+    
+  # Query configuration
+  query:
+    maxMemory: "4GB"
+    maxMemoryPerNode: "1GB"
+    maxTotalMemoryPerNode: "2GB"
+
+# OpenShift specific configuration
+openshift:
+  enabled: true
+  route:
+    enabled: true
+    host: ""  # Will be auto-generated if empty
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+# Security Context for OpenShift
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Pod Security Context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Resources
+resources:
+  coordinator:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+  worker:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Persistent Volume
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 10Gi
+
+# Catalogs configuration
+catalogs:
+  tpch:
+    enabled: true
+    splitsPerNode: 4
+  tpcds:
+    enabled: true
+    splitsPerNode: 4
+
+# ConfigMap for additional configuration
+configMap:
+  create: true
