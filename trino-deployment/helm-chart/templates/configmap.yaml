@@ -1,0 +1,19 @@
+{{- if .Values.configMap.create }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "trino.fullname" . }}-catalog
+  labels:
+    {{- include "trino.labels" . | nindent 4 }}
+data:
+  {{- if .Values.catalogs.tpch.enabled }}
+  tpch.properties: |
+    connector.name=tpch
+    tpch.splits-per-node={{ .Values.catalogs.tpch.splitsPerNode }}
+  {{- end }}
+  {{- if .Values.catalogs.tpcds.enabled }}
+  tpcds.properties: |
+    connector.name=tpcds
+    tpcds.splits-per-node={{ .Values.catalogs.tpcds.splitsPerNode }}
+  {{- end }}
+{{- end }}
