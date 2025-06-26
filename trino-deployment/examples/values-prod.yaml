@@ -1,0 +1,81 @@
+# Production Environment Values
+# High availability and performance configuration
+
+replicaCount: 1
+
+image:
+  repository: your-registry.com/trino
+  tag: "446"
+  pullPolicy: Always
+
+trino:
+  coordinator:
+    enabled: true
+    replicaCount: 1
+  worker:
+    enabled: true
+    replicaCount: 5  # Scale based on workload
+  jvm:
+    maxHeapSize: "8G"
+    minHeapSize: "8G"
+  query:
+    maxMemory: "20GB"
+    maxMemoryPerNode: "4GB"
+    maxTotalMemoryPerNode: "6GB"
+
+resources:
+  coordinator:
+    limits:
+      cpu: 4000m
+      memory: 12Gi
+    requests:
+      cpu: 2000m
+      memory: 8Gi
+  worker:
+    limits:
+      cpu: 2000m
+      memory: 6Gi
+    requests:
+      cpu: 1000m
+      memory: 4Gi
+
+persistence:
+  enabled: true
+  size: 100Gi
+  storageClass: "fast-ssd"
+
+openshift:
+  enabled: true
+  route:
+    enabled: true
+    host: "trino.your-domain.com"
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+
+# Anti-affinity for high availability
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchLabels:
+            component: worker
+        topologyKey: kubernetes.io/hostname
+
+# Additional catalogs for production
+configMap:
+  create: true
+  data:
+    postgresql.properties: |
+      connector.name=postgresql
+      connection-url=jdbc:postgresql://postgres.database.svc.cluster.local:5432/analytics
+      connection-user=${ENV:DB_USER}
+      connection-password=${ENV:DB_PASSWORD}
+    
+    mysql.properties: |
+      connector.name=mysql
+      connection-url=jdbc:mysql://mysql.database.svc.cluster.local:3306/warehouse
+      connection-user=${ENV:MYSQL_USER}
+      connection-password=${ENV:MYSQL_PASSWORD}
