@@ -1,0 +1,49 @@
+# Development Environment Values
+# Minimal resource allocation for development/testing
+
+replicaCount: 1
+
+image:
+  repository: trino
+  tag: "446"
+  pullPolicy: IfNotPresent
+
+trino:
+  coordinator:
+    enabled: true
+    replicaCount: 1
+  worker:
+    enabled: true
+    replicaCount: 1  # Minimal workers for dev
+  jvm:
+    maxHeapSize: "1G"
+    minHeapSize: "1G"
+  query:
+    maxMemory: "2GB"
+    maxMemoryPerNode: "512MB"
+    maxTotalMemoryPerNode: "1GB"
+
+resources:
+  coordinator:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  worker:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+
+persistence:
+  enabled: false  # Use emptyDir for dev
+
+openshift:
+  enabled: true
+  route:
+    enabled: true
+    host: "trino-dev.apps.your-cluster.com"
