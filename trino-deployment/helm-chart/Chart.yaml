@@ -1,0 +1,17 @@
+apiVersion: v2
+name: trino
+description: A Helm chart for Trino 446 on OpenShift
+type: application
+version: 0.1.0
+appVersion: "446"
+home: https://trino.io/
+sources:
+  - https://github.com/trinodb/trino
+maintainers:
+  - name: Trino Team
+keywords:
+  - trino
+  - presto
+  - sql
+  - analytics
+  - openshift
