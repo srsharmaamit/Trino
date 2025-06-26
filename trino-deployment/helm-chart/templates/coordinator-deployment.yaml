@@ -1,0 +1,104 @@
+{{- if .Values.trino.coordinator.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trino.fullname" . }}-coordinator
+  labels:
+    {{- include "trino.labels" . | nindent 4 }}
+    component: coordinator
+spec:
+  replicas: {{ .Values.trino.coordinator.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "trino.selectorLabels" . | nindent 6 }}
+      component: coordinator
+  template:
+    metadata:
+      labels:
+        {{- include "trino.selectorLabels" . | nindent 8 }}
+        component: coordinator
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: trino-coordinator
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: TRINO_ROLE
+              value: "coordinator"
+            - name: DISCOVERY_URI
+              value: "http://{{ include "trino.fullname" . }}-coordinator:{{ .Values.service.port }}"
+            - name: JVM_MAX_HEAP
+              value: "{{ .Values.trino.jvm.maxHeapSize }}"
+            - name: JVM_MIN_HEAP
+              value: "{{ .Values.trino.jvm.minHeapSize }}"
+            - name: QUERY_MAX_MEMORY
+              value: "{{ .Values.trino.query.maxMemory }}"
+            - name: QUERY_MAX_MEMORY_PER_NODE
+              value: "{{ .Values.trino.query.maxMemoryPerNode }}"
+            - name: QUERY_MAX_TOTAL_MEMORY_PER_NODE
+              value: "{{ .Values.trino.query.maxTotalMemoryPerNode }}"
+            - name: INCLUDE_COORDINATOR
+              value: "true"
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /v1/info
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /v1/info
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.resources.coordinator | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data/trino
+            {{- if .Values.configMap.create }}
+            - name: catalog-config
+              mountPath: /opt/trino/etc/catalog
+            {{- end }}
+      volumes:
+        - name: data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "trino.fullname" . }}-coordinator-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- if .Values.configMap.create }}
+        - name: catalog-config
+          configMap:
+            name: {{ include "trino.fullname" . }}-catalog
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
